@@ -106,13 +106,11 @@ def compare_images(imageA, imageB, title):
 def getScreen():
     img=ImageGrab.grab()
     img.save("screenshot.png")
-    cwd = os.getcwd()
-    path = cwd + "\\" + "screenshot.png"
-    return(path)
+    return("screenshot.png")
 def webcameCapture():
     retval, frame = cap.read()
-    cv2.imwrite("screenshot2.jpg",frame)
-    img=cv2.imread("screenshot2.jpg")
+    cv2.imwrite("webcam.png",frame)
+    img=cv2.imread("webcam.png")
     return(img)
 def enhanceImage(img):
     mg = Image.open(img)
@@ -149,14 +147,14 @@ while(True):
     # if user selected screenshot, take one!
     if(webcamOrScreen=="s"):
         print("Getting screenshot ...")
-        image=getScreen()
+        image=img=cv2.imread(getScreen())
     else:# otherwise, we use webcam
         print("Taking photo from webcam ...")
         image=webcameCapture()
     print("Transforming the image to grayscale ...")
     image=cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # write the image as tmp
-    cv2.imwrite("tmp.png",image)
+    cv2.imwrite("grayscale.png",image)
     # when the program starts we don't have any image to compare with. so just set the previous image to the new one
     if(preImage is None):
         preImage=image
@@ -172,7 +170,7 @@ while(True):
                 print("Trying to detect possible error ...")
                 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files (x86)\\Tesseract-OCR\\tesseract'
                 print("text: ")
-                errorText=pytesseract.image_to_string(enhanceImage("tmp.png"))
+                errorText=pytesseract.image_to_string(enhanceImage("grayscale.png"))
                 print(errorText)
             if(errorText==""):
                 errorText="There is something happening with MS. Please check the attachment"
@@ -180,6 +178,7 @@ while(True):
             file = open("error.txt","w")
             file.write(errorText)
             file.close()
+            sendEmail(email,"error.txt","grayscale.png")
             if(alarm=="on"):
                 winsound.Beep(300,2000)
                 winsound.Beep(600,2000)
