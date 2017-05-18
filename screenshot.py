@@ -139,6 +139,9 @@ while(True):
             if(errorText==""):
                 errorText="There is something happening with MS. Please check the attachment"
             print("Emailing ....")
+            file = open("error.txt","w")
+            file.write(errorText)
+            file.close() 
             if(alarm=="on"):
                 winsound.Beep(300,2000)
                 winsound.Beep(600,2000)
