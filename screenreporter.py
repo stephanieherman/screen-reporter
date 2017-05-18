@@ -3,7 +3,7 @@ import cv2
 import time
 from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
-#import pytesseract
+import pytesseract
 from pytesser import *
 from PIL import Image, ImageEnhance, ImageFilter
 import winsound
@@ -22,7 +22,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 def sendEmail(sendTo,textfile,img):
-
+    """Retrieves the error.txt and an the taken image and sends an email
+    with those attached"""
     # Open a plain text file for reading
     msg = MIMEMultipart()
 
@@ -51,6 +52,7 @@ def sendEmail(sendTo,textfile,img):
     server.quit()
 
 def getCommand():
+    """Retrieves the command specified by the user through email"""
     command="error"
     M = imaplib.IMAP4_SSL('imap.gmail.com')
     try:
@@ -80,37 +82,44 @@ def getInput(inputType):
     inputed = raw_input("%s:" % inputType)
     return inputed
 
-
 def mse(imageA, imageB):
-	# the 'Mean Squared Error' between the two images is the
-	# sum of the squared difference between the two images;
-	# NOTE: the two images must have the same dimension
-	err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
-	err /= float(imageA.shape[0] * imageA.shape[1])
+    """Calculates the Mean Square Error between two images"""
+    # the 'Mean Squared Error' between the two images is the
+    # sum of the squared difference between the two images;
+    # NOTE: the two images must have the same dimension
+    err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+    err /= float(imageA.shape[0] * imageA.shape[1])
 
-	# return the MSE, the lower the error, the more "similar"
-	# the two images are
-	return err
+    # return the MSE, the lower the error, the more "similar"
+    # the two images are
+    return err
 
 def compare_images(imageA, imageB, title):
-	# compute the mean squared error and structural similarity
-	# index for the images
-	m = mse(imageA, imageB)
-	s = ssim(imageA, imageB)
-	return s
-
+    """Compares two images"""
+    # compute the mean squared error and structural similarity
+    # index for the images
+    m = mse(imageA, imageB)
+    s = ssim(imageA, imageB)
+    return s
 
 #import pyscreenshot as ImageGrab
 def getScreen():
+    """Takes a screenshot and saves it as screenshot.png in the current
+    working directory"""
     img=ImageGrab.grab()
     img.save("screenshot.png")
     return("screenshot.png")
+
 def webcameCapture():
+    """Takes a photo through the webcam and saves it as webcam.png in
+    the current working directory"""
     retval, frame = cap.read()
     cv2.imwrite("webcam.png",frame)
     img=cv2.imread("webcam.png")
     return(img)
+
 def enhanceImage(img):
+    """Enhances an image"""
     mg = Image.open(img)
     mg.load()
     #mg = mg.filter(ImageFilter.MedianFilter())
