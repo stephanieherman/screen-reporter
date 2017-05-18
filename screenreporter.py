@@ -23,17 +23,16 @@ from email.mime.text import MIMEText
 
 def sendEmail(sendTo,textfile,img):
 
-    # Open a plain text file for reading.  For this example, assume that
-    # the text file contains only ASCII characters.
+    # Open a plain text file for reading
     msg = MIMEMultipart()
 
-    # Read the text file --> Error msg from OCR module
+    # Read the text file <-- Error msg from OCR module
     fp = open(textfile, 'rb')
     text = MIMEText(fp.read())
     fp.close()
     msg.attach(text)
 
-    msg['Subject'] = 'The MS is having a breakdown'
+    msg['Subject'] = 'An event has occurred at the MS'
     msg['From'] = "mass.checker@gmail.com"
     msg['To'] = sendTo
 
@@ -43,8 +42,7 @@ def sendEmail(sendTo,textfile,img):
     fp.close()
     msg.attach(img)
 
-    # Send the message via our own SMTP server, but don't include the
-    # envelope header.
+    # Send the message
     server = smtplib.SMTP('smtp.gmail.com',587)
     server.starttls()
     server.login("mass.checker@gmail.com", "massspecchecker1234")
@@ -124,13 +122,13 @@ def enhanceImage(img):
 
 
 #### reading required inputs from user
-email=getInput("Please enter your email address ")
-interval=int(getInput("Please enter the time interval of taking photo"))
-alarm=getInput("Please enter on/off for turning alarm system on or off ")
-webcamOrScreen=getInput("Please enter w/s for reading from webcam or screen ")
-OCROoption=getInput("Please enter on/off if you want to turn OCR on or off")
-threshold=float(getInput("Please enter the threshold for alarm. It should be between 0 and 1 where 0 is least and 1 is most sensitive"))
-commandEmail=getInput("Drive using email ? y/n ")
+email=getInput("Please enter your email address: ")
+interval=int(getInput("Please enter the time interval for taking photos: "))
+alarm=getInput("Please enter on/off for turning alarm system on or off: ")
+webcamOrScreen=getInput("Please enter w/s for reading from webcam or screen: ")
+OCROoption=getInput("Please enter on/off if you want to turn OCR on or off: ")
+threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive: "))
+commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]: ")
 #### in the begining we don't have any image
 preImage=None
 #### this handle for webcam!
@@ -173,7 +171,7 @@ while(True):
                 errorText=pytesseract.image_to_string(enhanceImage("grayscale.png"))
                 print(errorText)
             if(errorText==""):
-                errorText="There is something happening with MS. Please check the attachment"
+                errorText="An event has occurred at the MS. Please check the attachment"
             print("Emailing ....")
             file = open("error.txt","w")
             file.write(errorText)
