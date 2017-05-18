@@ -3,7 +3,7 @@ import cv2
 import time
 from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
-import pytesseract
+#import pytesseract
 from pytesser import *
 from PIL import Image, ImageEnhance, ImageFilter
 import winsound
@@ -122,13 +122,13 @@ def enhanceImage(img):
 
 
 #### reading required inputs from user
-email=getInput("Please enter your email address: ")
-interval=int(getInput("Please enter the time interval for taking photos: "))
-alarm=getInput("Please enter on/off for turning alarm system on or off: ")
-webcamOrScreen=getInput("Please enter w/s for reading from webcam or screen: ")
-OCROoption=getInput("Please enter on/off if you want to turn OCR on or off: ")
-threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive: "))
-commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]: ")
+email=getInput("Please enter your email address")
+interval=int(getInput("Please enter the time interval for taking photos"))
+alarm=getInput("Please enter [on/off] for turning alarm system on or off")
+webcamOrScreen=getInput("Please enter [w/s] for reading from webcam or screen")
+OCROoption=getInput("Please enter [on/off] if you want to turn OCR on or off")
+threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive"))
+commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]")
 #### in the begining we don't have any image
 preImage=None
 #### this handle for webcam!
