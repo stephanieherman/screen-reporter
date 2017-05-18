@@ -13,6 +13,44 @@ import getpass
 import email as em
 import datetime
 import os
+import ImageGrab
+
+import smtplib
+
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+def sendEmail(sendTo,textfile,img):
+
+    # Open a plain text file for reading.  For this example, assume that
+    # the text file contains only ASCII characters.
+    msg = MIMEMultipart()
+
+    # Read the text file --> Error msg from OCR module
+    fp = open(textfile, 'rb')
+    text = MIMEText(fp.read())
+    fp.close()
+    msg.attach(text)
+
+    msg['Subject'] = 'The MS is having a breakdown'
+    msg['From'] = "mass.checker@gmail.com"
+    msg['To'] = sendTo
+
+    # Load screenshot and attach to email
+    fp = open(img, 'rb')
+    img = MIMEImage(fp.read())
+    fp.close()
+    msg.attach(img)
+
+    # Send the message via our own SMTP server, but don't include the
+    # envelope header.
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login("mass.checker@gmail.com", "massspecchecker1234")
+
+    server.sendmail("mass.checker@gmail.com", sendTo, msg.as_string())
+    server.quit()
 
 def getCommand():
     command="error"
@@ -39,7 +77,7 @@ def getCommand():
         M.close()
         M.logout()
         return(command)
-  
+
 def getInput(inputType):
     inputed = raw_input("%s:" % inputType)
     return inputed
@@ -51,11 +89,11 @@ def mse(imageA, imageB):
 	# NOTE: the two images must have the same dimension
 	err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
 	err /= float(imageA.shape[0] * imageA.shape[1])
-	
+
 	# return the MSE, the lower the error, the more "similar"
 	# the two images are
 	return err
- 
+
 def compare_images(imageA, imageB, title):
 	# compute the mean squared error and structural similarity
 	# index for the images
@@ -65,12 +103,12 @@ def compare_images(imageA, imageB, title):
 
 
 #import pyscreenshot as ImageGrab
-import ImageGrab
 def getScreen():
-    img = ImageGrab.grab()
-    img.save('screenshot2.jpg')
-    img=cv2.imread("screenshot2.jpg")
-    return img
+    img=ImageGrab.grab()
+    img.save("screenshot.png")
+    cwd = os.getcwd()
+    path = cwd + "\\" + "screenshot.png"
+    return(path)
 def webcameCapture():
     retval, frame = cap.read()
     cv2.imwrite("screenshot2.jpg",frame)
@@ -141,7 +179,7 @@ while(True):
             print("Emailing ....")
             file = open("error.txt","w")
             file.write(errorText)
-            file.close() 
+            file.close()
             if(alarm=="on"):
                 winsound.Beep(300,2000)
                 winsound.Beep(600,2000)
