@@ -1,5 +1,4 @@
 # screen-reporter
----
 In this page we provide a screen monitoring application which was developed as a course project in Advanced Scientific Programming in Python - Uppsala University.
 
 The application is build to monitor a screen (through screenshots) or an environment (through the webcam). The application will take screenshots/photo in a certain intervall and then calculate the similarity between the two following images. If the similarity is less than a user specified threshold, an email will be sent to the user with the latest screenshot/photo attached and, if specified, also the logfile and the error message. An alarm system can also be used to alert the surroundings.
