@@ -14,13 +14,57 @@ import email as em
 import datetime
 import os
 import ImageGrab
-
 import smtplib
-
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import pyttsx
+import win32evtlog
+import win32api
+import win32con
+import win32security # To translate NT Sids to account names.
+import win32evtlogutil
+
+def ReadLog(computer, logType="Application", dumpEachRecord = 0):
+    # read the entire log back.
+    h=win32evtlog.OpenEventLog(computer, logType)
+    numRecords = win32evtlog.GetNumberOfEventLogRecords(h)
+#       print "There are %d records" % numRecords
+    logToText=""
+    num=0
+    while 1:
+        objects = win32evtlog.ReadEventLog(h, win32evtlog.EVENTLOG_BACKWARDS_READ|win32evtlog.EVENTLOG_SEQUENTIAL_READ, 0)
+        if not objects:
+            break
+        for object in objects:
+            # get it for testing purposes, but dont print it.
+            msg = win32evtlogutil.SafeFormatMessage(object, logType)
+            if object.Sid is not None:
+                try:
+                    domain, user, typ = win32security.LookupAccountSid(computer, object.Sid)
+                    sidDesc = "%s/%s" % (domain, user)
+                except win32security.error:
+                    sidDesc = str(object.Sid)
+                user_desc = "Event associated with user %s" % (sidDesc,)
+            else:
+                user_desc = None
+            if dumpEachRecord:
+                logToText+="\n"+"Event record from %r generated at %s" % (object.SourceName, object.TimeGenerated.Format())
+                if user_desc:
+                    logToText+="\n"+user_desc
+                try:
+                    logToText+="\n"+msg
+                except UnicodeError:
+                    logToText+="\n"+"(unicode error printing message: repr() follows...)"
+                    logToText+="\n"+repr(msg)
+        num = num + len(objects)
+    if numRecords == num:
+        logToText+="\n"+"Successfully read all "+ str(numRecords)+ " records"
+    else:
+        logToText+="\n"+"Couldn't get all records - reported %d, but found %d" % (numRecords, num)
+        logToText+="\n"+"(Note that some other app may have written records while we were running!)"
+    win32evtlog.CloseEventLog(h)
+    return(logToText)
 
 # this function take a message and convert to speech using pyttsx 
 def sayCommand(message):
@@ -92,6 +136,8 @@ def getCommand():
         command=msg['Subject']
         M.close()
         M.logout()
+        if(command is None):
+            command="error"
         return(command)
 
 def getInput(inputType):
@@ -110,7 +156,7 @@ def mse(imageA, imageB):
     # the two images are
     return err
 
-def compare_images(imageA, imageB, title):
+def compare_images(imageA, imageB):
     """Compares two images"""
     # compute the mean squared error and structural similarity
     # index for the images
@@ -145,16 +191,27 @@ def enhanceImage(img):
     #mg.save('out.jpg')
     return(mg)
 
+email="payam.emami@medsci.uu.se;stephanie.herman@medsci.uu.se"
+interval=2
+alarm="off"
+webcamOrScreen="s"
+OCROoption="on"
+threshold=0.7
+logfile="n"
+commandEmail="y"
 
 #### reading required inputs from user
-email=getInput("Please enter your email address")
-interval=int(getInput("Please enter the time interval for taking photos"))
-alarm=getInput("Please enter [on/off] for turning alarm system on or off")
-webcamOrScreen=getInput("Please enter [w/s] for reading from webcam or screen")
-OCROoption=getInput("Please enter [on/off] if you want to turn OCR on or off")
-threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive"))
-logfile=getInput("Do you want to include the MS log file? [y/n]")
-commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]")
+if(len(sys.argv)==1):
+    email=getInput("Please enter your email address")
+    interval=int(getInput("Please enter the time interval for taking photos"))
+    alarm=getInput("Please enter [on/off] for turning alarm system on or off")
+    webcamOrScreen=getInput("Please enter [w/s] for reading from webcam or screen")
+    OCROoption=getInput("Please enter [on/off] if you want to turn OCR on or off")
+    threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive"))
+    logfile=getInput("Do you want to include the MS log file? [y/n]")
+    commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]")
+if(len(sys.argv)>1):
+    print("Using default settings! The email will be sent to %s"% email)   
 #### in the begining we don't have any image
 preImage=None
 #### this handle for webcam!
@@ -163,7 +220,6 @@ cap=""
 if(webcamOrScreen=="w"):
     print("Turning on the webcam")
     cap = cv2.VideoCapture(0)
-
 
 while(True):
     # wait for the interval user selected
@@ -182,12 +238,12 @@ while(True):
     # when the program starts we don't have any image to compare with. so just set the previous image to the new one
     if(preImage is None):
         preImage=image
-        print(1)
     else:
         newImage=image
-        error=compare_images(preImage, newImage, "Original vs. Original")
+        error=compare_images(preImage, newImage)
         print(error)
         if(error<threshold):
+            logTxt=""
             errorText=""
             print("The screen has changed! preparing the report ...")
             if(OCROoption=="on"):
@@ -198,6 +254,12 @@ while(True):
                 print(errorText)
             if(errorText==""):
                 errorText="An event has occurred at the MS. Please check the attachment"
+            if(logfile=="y"):
+               print("Reading log ...")
+               logTxt=ReadLog(None,"Application",1)
+               file = open("log.txt","w")
+               file.write(logTxt.encode('utf8'))
+               file.close()
             print("Emailing ....")
             file = open("error.txt","w")
             file.write(errorText)
@@ -209,20 +271,29 @@ while(True):
                 while(True):
                      time.sleep(5)
                      command=getCommand()
+                     if(command is None):
+                         command=""
                      if(command=="exit"):
+                         print("Executing command ...")
                          sys.exit()
                      if(command=="continue"):
+                         print("Executing command ...")
                          break;
                      if(command=="reset"):
+                         print("Executing command ...")
                          preImage="None"
                          break;
                      if(command=="shutdown"):
+                         print("Executing command ...")
                          os.system('shutdown -s')
                      if(command=="alarm"):
+                         print("Executing command ...")
                          winsound.PlaySound('alarm.wav', winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP)
                      if(command=="stopalarm"):
+                         print("Executing command ...")
                          winsound.PlaySound(None, winsound.SND_ASYNC)
                      if(command=="status"):
+                         print("Executing command ...")
                          if(webcamOrScreen=="s"):
                              getScreen()
                              sendEmail(email,"",logfile,"screenshot.png")
@@ -237,9 +308,19 @@ while(True):
                          message=commandSplit[1]
                          # and third element is repetitions
                          repetitions=int(commandSplit[2])
+                         print("Executing command ...")
                          # then we say the message
                          for x in range(0, repetitions):
-                             sayCommand(message)                     
+                             sayCommand(message)
+                     if(command=="log"):
+                             print("Reading log ...")
+                             logTxt=ReadLog(None,"Application",1)
+                             print("writing log to text file ...")
+                             file = open("log.txt","w")
+                             file.write(logTxt.encode('utf8'))
+                             file.close()
+                             print("Executing command ...")
+                             sendEmail(email,"error.txt","y","grayscale.png")
 
             preImage=newImage
 if(webcamOrScreen=="w"):
