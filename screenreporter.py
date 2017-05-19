@@ -3,7 +3,7 @@ import cv2
 import time
 from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
-#import pytesseract
+import pytesseract
 from pytesser import *
 from PIL import Image, ImageEnhance, ImageFilter
 import winsound
@@ -20,6 +20,13 @@ import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import pyttsx
+
+# this function take a message and convert to speech using pyttsx 
+def sayCommand(message):
+	eng=pyttsx.init()
+	eng.say(message)
+	eng.runAndWait()
 
 def sendEmail(sendTo,textfile,logfile,img):
     """Retrieves the error.txt and an the taken image and sends an email
@@ -222,6 +229,17 @@ while(True):
                          if(webcamOrScreen=="w"):
                              webcameCapture()
                              sendEmail(email,"",logfile,"webcam.png")
+                     if "say" in command:
+                         # the format of command for this section is "say:message:x". The program says the message x times. 
+                         # split the message by ":"
+                         commandSplit=command.split(":")
+                         # second element is message
+                         message=commandSplit[1]
+                         # and third element is repetitions
+                         repetitions=int(commandSplit[2])
+                         # then we say the message
+                         for x in range(0, repetitions):
+                             sayCommand(message)                     
 
             preImage=newImage
 if(webcamOrScreen=="w"):
