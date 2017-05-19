@@ -15,7 +15,7 @@ import cv2
 import time
 from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
-#import pytesseract
+import pytesseract
 from pytesser import *
 from PIL import Image, ImageEnhance, ImageFilter
 import winsound
