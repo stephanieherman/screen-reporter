@@ -3,7 +3,7 @@ import cv2
 import time
 from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
-import pytesseract
+#import pytesseract
 from pytesser import *
 from PIL import Image, ImageEnhance, ImageFilter
 import winsound
@@ -21,7 +21,7 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-def sendEmail(sendTo,textfile,img):
+def sendEmail(sendTo,textfile,logfile,img):
     """Retrieves the error.txt and an the taken image and sends an email
     with those attached"""
     # Open a plain text file for reading
@@ -33,6 +33,14 @@ def sendEmail(sendTo,textfile,img):
         text = MIMEText(fp.read())
         fp.close()
         msg.attach(text)
+
+    if(logfile=='y'):
+        filename = "log.txt"
+        fp = open(filename)
+        log = MIMEText(fp.read())
+        fp.close()
+        log.add_header('Content-Disposition', 'attachment', filename=filename)
+        msg.attach(log)
 
     msg['Subject'] = 'An event has occurred at the MS'
     msg['From'] = "mass.checker@gmail.com"
@@ -138,6 +146,7 @@ alarm=getInput("Please enter [on/off] for turning alarm system on or off")
 webcamOrScreen=getInput("Please enter [w/s] for reading from webcam or screen")
 OCROoption=getInput("Please enter [on/off] if you want to turn OCR on or off")
 threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive"))
+logfile=getInput("Do you want to include the MS log file? [y/n]")
 commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]")
 #### in the begining we don't have any image
 preImage=None
@@ -186,7 +195,7 @@ while(True):
             file = open("error.txt","w")
             file.write(errorText)
             file.close()
-            sendEmail(email,"error.txt","grayscale.png")
+            sendEmail(email,"error.txt",logfile,"grayscale.png")
             if(alarm=="on"):
                 winsound.PlaySound('alarm.wav', winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP)
             if(commandEmail=="y"):
@@ -209,10 +218,10 @@ while(True):
                      if(command=="status"):
                          if(webcamOrScreen=="s"):
                              getScreen()
-                             sendEmail(email,"","screenshot.png")
+                             sendEmail(email,"",logfile,"screenshot.png")
                          if(webcamOrScreen=="w"):
                              webcameCapture()
-                             sendEmail(email,"","webcam.png")
+                             sendEmail(email,"",logfile,"webcam.png")
 
             preImage=newImage
 if(webcamOrScreen=="w"):
