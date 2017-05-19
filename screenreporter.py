@@ -24,6 +24,7 @@ import win32api
 import win32con
 import win32security # To translate NT Sids to account names.
 import win32evtlogutil
+from twilio.rest import Client
 
 def ReadLog(computer, logType="Application", dumpEachRecord = 0):
     # read the entire log back.
@@ -66,7 +67,7 @@ def ReadLog(computer, logType="Application", dumpEachRecord = 0):
     win32evtlog.CloseEventLog(h)
     return(logToText)
 
-# this function take a message and convert to speech using pyttsx 
+# this function take a message and convert to speech using pyttsx
 def sayCommand(message):
 	eng=pyttsx.init()
 	eng.say(message)
@@ -164,7 +165,6 @@ def compare_images(imageA, imageB):
     s = ssim(imageA, imageB)
     return s
 
-#import pyscreenshot as ImageGrab
 def getScreen():
     """Takes a screenshot and saves it as screenshot.png in the current
     working directory"""
@@ -199,10 +199,12 @@ OCROoption="on"
 threshold=0.7
 logfile="n"
 commandEmail="y"
+mobile=""
 
 #### reading required inputs from user
 if(len(sys.argv)==1):
     email=getInput("Please enter your email address")
+    mobile=getInput("Please provide mobile number if you want alerts through sms")
     interval=int(getInput("Please enter the time interval for taking photos"))
     alarm=getInput("Please enter [on/off] for turning alarm system on or off")
     webcamOrScreen=getInput("Please enter [w/s] for reading from webcam or screen")
@@ -211,7 +213,7 @@ if(len(sys.argv)==1):
     logfile=getInput("Do you want to include the MS log file? [y/n]")
     commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]")
 if(len(sys.argv)>1):
-    print("Using default settings! The email will be sent to %s"% email)   
+    print("Using default settings! The email will be sent to %s"% email)
 #### in the begining we don't have any image
 preImage=None
 #### this handle for webcam!
@@ -265,6 +267,15 @@ while(True):
             file.write(errorText)
             file.close()
             sendEmail(email,"error.txt",logfile,"grayscale.png")
+            if(mobile!=""):
+                # Find these values at https://twilio.com/user/account
+                account_sid = "AC04bfb7de2206875f4427f2eea454e49a"
+                auth_token = "86f75bf437606bac2924e54ef3f76a7f"
+                client = Client(account_sid, auth_token)
+
+                message = client.api.account.messages.create(to=mobile,
+                                             from_="+46769437491",
+                                             body="Check you email! The MS is experiencing problems.")
             if(alarm=="on"):
                 winsound.PlaySound('alarm.wav', winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP)
             if(commandEmail=="y"):
@@ -301,7 +312,7 @@ while(True):
                              webcameCapture()
                              sendEmail(email,"",logfile,"webcam.png")
                      if "say" in command:
-                         # the format of command for this section is "say:message:x". The program says the message x times. 
+                         # the format of command for this section is "say:message:x". The program says the message x times.
                          # split the message by ":"
                          commandSplit=command.split(":")
                          # second element is message
