@@ -28,10 +28,11 @@ def sendEmail(sendTo,textfile,img):
     msg = MIMEMultipart()
 
     # Read the text file <-- Error msg from OCR module
-    fp = open(textfile, 'rb')
-    text = MIMEText(fp.read())
-    fp.close()
-    msg.attach(text)
+    if(textfile!=""):
+        fp = open(textfile, 'rb')
+        text = MIMEText(fp.read())
+        fp.close()
+        msg.attach(text)
 
     msg['Subject'] = 'An event has occurred at the MS'
     msg['From'] = "mass.checker@gmail.com"
@@ -187,15 +188,13 @@ while(True):
             file.close()
             sendEmail(email,"error.txt","grayscale.png")
             if(alarm=="on"):
-                winsound.Beep(300,2000)
-                winsound.Beep(600,2000)
-                winsound.Beep(800,2000)
+                winsound.PlaySound('alarm.wav', winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP)
             if(commandEmail=="y"):
                 while(True):
                      time.sleep(5)
                      command=getCommand()
                      if(command=="exit"):
-                         exit()
+                         sys.exit()
                      if(command=="continue"):
                          break;
                      if(command=="reset"):
@@ -203,6 +202,18 @@ while(True):
                          break;
                      if(command=="shutdown"):
                          os.system('shutdown -s')
+                     if(command=="alarm"):
+                         winsound.PlaySound('alarm.wav', winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP)
+                     if(command=="stopalarm"):
+                         winsound.PlaySound(None, winsound.SND_ASYNC)
+                     if(command=="status"):
+                         if(webcamOrScreen=="s"):
+                             getScreen()
+                             sendEmail(email,"","screenshot.png")
+                         if(webcamOrScreen=="w"):
+                             webcameCapture()
+                             sendEmail(email,"","webcam.png")
+
             preImage=newImage
 if(webcamOrScreen=="w"):
     cap.release()
