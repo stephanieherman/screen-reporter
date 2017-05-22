@@ -117,7 +117,7 @@ def getCommand():
     command="error"
     M = imaplib.IMAP4_SSL('imap.gmail.com')
     try:
-        M.login('mass.checker@gmail.com', 'massspecchecker1234')
+        M.login('mass.checker@gmail.com', pswd)
     except imaplib.IMAP4.error:
         print "LOGIN FAILED!!! "
     rv, mailboxes = M.list()
@@ -212,6 +212,7 @@ if(len(sys.argv)==1):
     threshold=float(getInput("Please enter the similarity threshold for alerting. It should be between 0 and 1 where 0 is least and 1 is most sensitive"))
     logfile=getInput("Do you want to include the MS log file? [y/n]")
     commandEmail=getInput("Do you want to be able to control the MS computer through email? [y/n]")
+    pswd=getInput("Please enter password")
 if(len(sys.argv)>1):
     print("Using default settings! The email will be sent to %s"% email)
 #### in the begining we don't have any image
